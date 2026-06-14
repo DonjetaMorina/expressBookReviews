@@ -12,15 +12,11 @@ app.use("/customer", session({ secret: "fingerprint_customer", resave: true, sav
 
 // Integrated Authentication Mechanism
 app.use("/customer/auth/*", function auth(req, res, next) {
-    // Check if the session exists and contains authorization data
     if (req.session && req.session.authorization) {
-        // Retrieve the access token from the session storage
         const token = req.session.authorization['accessToken'];
 
-        // Verify the JWT token using the secret key
         jwt.verify(token, "access", (err, user) => {
             if (!err) {
-                // If token is valid, attach user payload to request and proceed
                 req.user = user;
                 next(); 
             } else {
