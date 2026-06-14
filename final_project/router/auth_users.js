@@ -34,19 +34,15 @@ regd_users.post("/login", (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
 
-  // Validate that both fields are provided
   if (!username || !password) {
     return res.status(400).json({ message: "Username and password are required" });
   }
 
-  // Check if credentials match our record array
   if (authenticatedUser(username, password)) {
-    // Generate JSON Web Token (JWT) valid for 1 hour
     let accessToken = jwt.sign({
       data: password
     }, 'access', { expiresIn: 60 * 60 });
 
-    // Save token and username into the session tracking object
     req.session.authorization = {
       accessToken, username
     }
@@ -57,10 +53,34 @@ regd_users.post("/login", (req, res) => {
   }
 });
 
-// Add a book review
+// Task 8: Add or modify a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-  // Write your code here (Task 8)
-  return res.status(300).json({ message: "Yet to be implemented" });
+  const isbn = req.params.isbn;
+  const reviewText = req.query.review; // Hint: Give a review as a request query
+  const username = req.session.authorization?.username; // Fetch username stored in the session
+
+  // Verify that a review message was passed in the query parameters
+  if (!reviewText) {
+    return res.status(400).json({ message: "Review text query parameter is required" });
+  }
+
+  // Find the target book by ISBN
+  if (books[isbn]) {
+    // If the reviews object doesn't exist for the book, initialize it
+    if (!books[isbn].reviews) {
+      books[isbn].reviews = {};
+    }
+
+    // Assign or overwrite the review matching this username
+    books[isbn].reviews[username] = reviewText;
+
+    return res.status(200).json({ 
+      message: `Review for ISBN ${isbn} has been successfully added/updated by user '${username}'`,
+      reviews: books[isbn].reviews 
+    });
+  } else {
+    return res.status(404).json({ message: "Book not found" });
+  }
 });
 
 module.exports.authenticated = regd_users;
