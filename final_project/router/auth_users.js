@@ -56,28 +56,41 @@ regd_users.post("/login", (req, res) => {
 // Task 8: Add or modify a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
   const isbn = req.params.isbn;
-  const reviewText = req.query.review; // Hint: Give a review as a request query
-  const username = req.session.authorization?.username; // Fetch username stored in the session
+  const reviewText = req.query.review; 
+  const username = req.session.authorization?.username; 
 
-  // Verify that a review message was passed in the query parameters
   if (!reviewText) {
     return res.status(400).json({ message: "Review text query parameter is required" });
   }
 
-  // Find the target book by ISBN
   if (books[isbn]) {
-    // If the reviews object doesn't exist for the book, initialize it
     if (!books[isbn].reviews) {
       books[isbn].reviews = {};
     }
-
-    // Assign or overwrite the review matching this username
     books[isbn].reviews[username] = reviewText;
-
     return res.status(200).json({ 
       message: `Review for ISBN ${isbn} has been successfully added/updated by user '${username}'`,
       reviews: books[isbn].reviews 
     });
+  } else {
+    return res.status(404).json({ message: "Book not found" });
+  }
+});
+
+// Task 9: Delete a book review
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+  const isbn = req.params.isbn;
+  const username = req.session.authorization?.username; // Get username from session
+
+  if (books[isbn]) {
+    // Check if a review exists from this specific user
+    if (books[isbn].reviews && books[isbn].reviews[username]) {
+      // Hint: Delete the review based on the session username
+      delete books[isbn].reviews[username];
+      return res.status(200).json({ message: `Reviews for ISBN ${isbn} posted by user '${username}' have been deleted.` });
+    } else {
+      return res.status(404).json({ message: `No review found for ISBN ${isbn} from user '${username}'` });
+    }
   } else {
     return res.status(404).json({ message: "Book not found" });
   }
